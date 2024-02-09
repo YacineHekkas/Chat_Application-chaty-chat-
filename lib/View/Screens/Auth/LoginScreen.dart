@@ -1,92 +1,31 @@
+import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import '../../CustomUI/custom_elevated_button.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:whatsapp_clone/Controller/auth.dart';
 import '../../CustomUI/custom_text_field.dart';
-import '../VerificationScreen.dart';
 
-class LoginScreen extends StatefulWidget {
+
+class LoginScreen extends ConsumerStatefulWidget   {
   const LoginScreen({super.key});
-
   @override
-  State<LoginScreen> createState() => _LoginPageState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _LoginScreenState();
 }
+class _LoginScreenState extends ConsumerState<LoginScreen> {
 
-class _LoginPageState extends State<LoginScreen> {
+ // late Response response;
   late TextEditingController countryNameController;
   late TextEditingController countryCodeController;
+  late TextEditingController phonNumberController;
   late TextEditingController emailController;
 
-  sendCodeToPhone() {
-    // final phoneNumber = phoneNumberController.text;
-    // final countryName = countryNameController.text;
-    // final countryCode = countryCodeController.text;
-    //
-    // if (phoneNumber.isEmpty) {
-    //   return showAlertDialog(
-    //     context: context,
-    //     message: "Please enter your phone number",
-    //   );
-    // } else if (phoneNumber.length < 9) {
-    //   return showAlertDialog(
-    //     context: context,
-    //     message:
-    //     'The phone number you entered is too short for the country: $countryName\n\nInclude your area code if you haven\'t',
-    //   );
-    // } else if (phoneNumber.length > 10) {
-    //   return showAlertDialog(
-    //     context: context,
-    //     message:
-    //     "The phone number you entered is too long for the country: $countryName",
-    //   );
-    // }
-    //
-    // ref.read(authControllerProvider).sendSmsCode(
-    //   context: context,
-    //   phoneNumber: "+$countryCode$phoneNumber",
-    // );
-  }
 
-  showCountryPickerBottomSheet() {
-    // showCountryPicker(
-    //   context: context,
-    //   showPhoneCode: true,
-    //   favorite: ['ET'],
-    //   countryListTheme: CountryListThemeData(
-    //     bottomSheetHeight: 600,
-    //     backgroundColor: Theme.of(context).backgroundColor,
-    //     flagSize: 22,
-    //     borderRadius: BorderRadius.circular(20),
-    //     textStyle: TextStyle(color: context.theme.greyColor),
-    //     inputDecoration: InputDecoration(
-    //       labelStyle: TextStyle(color: context.theme.greyColor),
-    //       prefixIcon: const Icon(
-    //         Icons.language,
-    //         color: Coloors.greenDark,
-    //       ),
-    //       hintText: 'Search country by code or name',
-    //       enabledBorder: UnderlineInputBorder(
-    //         borderSide: BorderSide(
-    //           color: context.theme.greyColor!.withOpacity(.2),
-    //         ),
-    //       ),
-    //       focusedBorder: const UnderlineInputBorder(
-    //         borderSide: BorderSide(
-    //           color: Coloors.greenDark,
-    //         ),
-    //       ),
-    //     ),
-    //   ),
-    //   onSelect: (country) {
-    //     countryNameController.text = country.name;
-    //     countryCodeController.text = country.phoneCode;
-    //   },
-    // );
-  }
 
   @override
   void initState() {
-    countryNameController = TextEditingController(text: 'Ethiopia');
-    countryCodeController = TextEditingController(text: '251');
+    countryNameController = TextEditingController(text: 'Algeria');
+    countryCodeController = TextEditingController(text: '213');
+    phonNumberController = TextEditingController();
     emailController = TextEditingController();
     super.initState();
   }
@@ -117,7 +56,7 @@ class _LoginPageState extends State<LoginScreen> {
             actions: [
               IconButton(
                 onPressed: () {},
-                icon: Icon(Icons.more_vert),
+                icon: const Icon(Icons.more_vert),
               ),
             ],
           ),
@@ -127,7 +66,7 @@ class _LoginPageState extends State<LoginScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: RichText(
                   textAlign: TextAlign.center,
-                  text: TextSpan(
+                  text: const TextSpan(
                     text: 'WhatsApp will need to verify your email. ',
                     style: TextStyle(
                       color: Colors.black54,
@@ -183,9 +122,9 @@ class _LoginPageState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
+                     Expanded(
                       child: CustomTextField(
-                        // controller: phoneNumberController,
+                        controller: phonNumberController,
                         hintText: 'phone number',
                         textAlign: TextAlign.left,
                         keyboardType: TextInputType.number,
@@ -196,7 +135,7 @@ class _LoginPageState extends State<LoginScreen> {
               ),
               const SizedBox(height: 20),
 
-              Text(
+              const Text(
                 'Carrier charges may apply',
                 style: TextStyle(
                   color: Colors.black54,
@@ -206,31 +145,89 @@ class _LoginPageState extends State<LoginScreen> {
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
           floatingActionButton: Container(
-            margin: EdgeInsets.all(20),
-            height: 42,
-            width: 90 ,
-            child: ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-              ),
-              onPressed: (){
-                if(emailController.text != ""){
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => VerificationScreen() ),
-                  );
-                  //TODO : add logic
-                }
 
-              },
-              child: const Text(
-                  "Next",
-                style: TextStyle(
-                  color: Colors.white
+            child: Consumer(builder: (context,ref, _){
+              bool isLoading = ref.watch(authNotifierProvider);
+              return isLoading ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
                 ),
-              ),
+                onPressed: () async {
+                  if ((phonNumberController.text == "") || (emailController.text == "")) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      backgroundColor: Colors.red,
+                      content: Text('Please fill all fields.'),
+                    ));
+                  }else if (!isEmailValid(emailController.text)) {
+                    // Display an error message if email format is invalid
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      backgroundColor: Colors.red,
+                      content: Text('Please enter a valid email address.'),
+                    ));
+                  }
+                  else{
+                    ref.read(authNotifierProvider.notifier).login(email: emailController.text, context: context);
+                  }
+
+                },
+
+                child: const Text(
+                  "Next",
+                  style: TextStyle(
+                      color: Colors.white
+                  ),
+                ),
+              );
+            },)
+          ),
+    );
+
+  }
+
+  bool isEmailValid(String email) {
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegExp.hasMatch(email);
+  }
+
+
+
+  showCountryPickerBottomSheet() {
+    showCountryPicker(
+      context: context,
+      showPhoneCode: true,
+      favorite: ['ET'],
+      countryListTheme: CountryListThemeData(
+        bottomSheetHeight: 600,
+        backgroundColor: Theme.of(context).backgroundColor,
+        flagSize: 22,
+        borderRadius: BorderRadius.circular(20),
+        textStyle: TextStyle(color: Colors.grey),
+        inputDecoration: InputDecoration(
+          labelStyle: TextStyle(color: Colors.grey),
+          prefixIcon: const Icon(
+            Icons.language,
+            color: Colors.red,
+          ),
+          hintText: 'Search country by code or name',
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(.2),
             ),
           ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.red,
+            ),
+          ),
+        ),
+      ),
+      onSelect: (country) {
+        countryNameController.text = country.name;
+        countryCodeController.text = country.phoneCode;
+      },
     );
   }
 }
+
+

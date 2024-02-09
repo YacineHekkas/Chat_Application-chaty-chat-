@@ -14,9 +14,9 @@ class OwnMessageCard extends StatelessWidget {
           maxWidth: MediaQuery.of(context).size.width - 45,
         ),
         child: Card(
-          elevation: 1,
+          elevation: 3,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          color: Color(0xffdcf8c6),
+          color: Theme.of(context).primaryColorLight,
           margin: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
           child: Stack(
             children: [

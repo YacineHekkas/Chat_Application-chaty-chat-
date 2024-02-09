@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../Models/chat_model.dart';
+import 'package:whatsapp_clone/Models/chat_model.dart';
 import '../CustomUI/costum_card.dart';
 
 class ChatPage extends StatefulWidget {
@@ -28,12 +28,20 @@ class _ChatPageState extends State<ChatPage> {
           color: Colors.white,
         ),
       ),
-      body: ListView.builder(
-        itemCount: widget.chatmodels.length,
-        itemBuilder: (contex, index) => CustomCard(
-          chatModel: widget.chatmodels[index],
-          sourchat: widget.sourchat,
-        ),
+      body:CustomScrollView(
+        slivers: [
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                return CustomCard(
+                  chatModel: widget.chatmodels[index],
+                  sourchat: widget.sourchat,
+                );
+              },
+              childCount: widget.chatmodels.length,
+            ),
+          ),
+        ],
       ),
     );
   }

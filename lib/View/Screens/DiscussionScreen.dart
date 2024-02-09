@@ -2,11 +2,16 @@
 // import 'package:chatapp/CustomUI/CameraUI.dart';
 
 
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
+import 'package:expandable_menu/expandable_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/Models/chat_model.dart';
 import 'package:whatsapp_clone/Models/message_model.dart';
 import 'package:whatsapp_clone/view/CustomUI/own_messag_card.dart';
 import 'package:whatsapp_clone/view/CustomUI/replay_card.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class DiscussionScreen extends StatefulWidget {
   DiscussionScreen({ super.key, required this.chatModel, required this.sourchat}) ;
@@ -19,6 +24,7 @@ class DiscussionScreen extends StatefulWidget {
 
 class _DiscussionScreen extends State<DiscussionScreen> {
   bool show = false;
+  late IO.Socket socket;
   FocusNode focusNode = FocusNode();
   bool sendButton = false;
   List<MessageModel> messages = [];
@@ -26,166 +32,229 @@ class _DiscussionScreen extends State<DiscussionScreen> {
   ScrollController _scrollController = ScrollController();
 
   @override
-  // void initState() {
-  //   super.initState();
-  //   // connect();
-  //
-  //   focusNode.addListener(() {
-  //     if (focusNode.hasFocus) {
-  //       setState(() {
-  //         show = false;
-  //       });
-  //     }
-  //   });
-  //   connect();
-  // }
+  void initState() {
+    super.initState();
+    // connect();
 
-  // void connect() {
-  //   // MessageModel messageModel = MessageModel(sourceId: widget.sourceChat.id.toString(),targetId: );
-  //   socket = IO.io("http://192.168.0.106:5000", <String, dynamic>{
-  //     "transports": ["websocket"],
-  //     "autoConnect": false,
-  //   });
-  //   socket.connect();
-  //   socket.emit("signin", widget.sourchat.id);
-  //   socket.onConnect((data) {
-  //     print("Connected");
-  //     socket.on("message", (msg) {
-  //       print(msg);
-  //       setMessage("destination", msg["message"]);
-  //       _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-  //           duration: Duration(milliseconds: 300), curve: Curves.easeOut);
-  //     });
-  //   });
-  //   print(socket.connected);
-  // }
+    focusNode.addListener(() {
+      if (focusNode.hasFocus) {
+        setState(() {
+          show = false;
+        });
+      }
+    });
+    getAllmessage(widget.sourchat.id, widget.chatModel.id);
+    connect();
+  }
 
-  // void sendMessage(String message, int sourceId, int targetId) {
-  //   setMessage("source", message);
-  //   socket.emit("message",
-  //       {"message": message, "sourceId": sourceId, "targetId": targetId});
-  // }
+  void connect() {
+    // MessageModel messageModel = MessageModel(sourceId: widget.sourceChat.id.toString(),targetId: );
+     socket = IO.io("http://localhost:5000", <String, dynamic>{
+      "transports": ["websocket"],
+      "autoConnect": false,
+    });
+    socket.connect();
+    print("--->${socket.connected}");
+    socket.emit("signin", widget.sourchat.id);
+    socket.onConnect((data) {
+      print("--> Connected");
+      socket.on("message", (msg) {
+        print(msg);
+        setMessage("destination", msg["message"]);
 
-  // void setMessage(String type, String message) {
-  //   MessageModel messageModel = MessageModel(
-  //       type: type,
-  //       message: message,
-  //       time: DateTime.now().toString().substring(10, 16));
-  //   print(messages);
-  //
-  //   setState(() {
-  //     messages.add(messageModel);
-  //   });
-  // }
+        _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeOut
+        );
+      });
+    });
+    print(socket.connected);
+  }
+
+  Future<void> sendMessage(String message, int sourceId, int targetId) async {
+    setMessage("source", message);
+    socket.emit("message",
+        {"message": message, "sourceId": sourceId, "targetId": targetId});
+
+
+    try {
+      Dio dio = Dio();
+
+      String apiUrl = "http://localhost:5000/api/message/addmsg";
+
+      Map<String, dynamic> data = {
+        'from': "$sourceId" ,
+        'to':"$targetId",
+        'message':message
+      };
+
+      Response response = await dio.post(
+        apiUrl,
+        data: jsonEncode(data),
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+
+      // Handle the response
+      if (response.statusCode == 200) {
+        // Successful response, handle accordingly
+        print("Response data: ${response.data}");
+      } else {
+        // Handle error response
+        print("Error: ${response.statusCode}");
+      }
+    } catch (error) {
+      // Handle Dio errors
+      print("Dio error: $error");
+    }
+  }
+
+
+
+  Future<void> getAllmessage( int sourceId, int targetId ) async {
+    print("i'm trynig to get the messages ");
+    try {
+      print('1');
+      Dio dio = Dio();
+
+      String apiUrl = "http://localhost:5000/api/message/getmsg";
+      print('1');
+      Map<String, dynamic> data = {
+        'from': "$sourceId" ,
+        'to':"$targetId",
+      };
+
+      Response response = await dio.post(
+        apiUrl,
+        data: jsonEncode(data),
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      print("2");
+      if (response.statusCode == 200) {
+        print("Response data: ${response.data[1]}");
+        for (  int i = 0 ; i<  response.data.length ; i++ ){
+          String typeMssg =  response.data[i]['fromSelf'] ? "source":"destination";
+          setMessage( typeMssg , response.data[i]['message']);
+        }
+
+      } else {
+        // Handle error response
+        print("Error: ${response.statusCode}");
+      }
+    } catch (error) {
+      // Handle Dio errors
+      print("Dio error: $error");
+    }
+
+  }
+
+  void setMessage(String type, String message) {
+    MessageModel messageModel = MessageModel(
+        type: type,
+        message: message,
+        time: DateTime.now().toString().substring(10, 16));
+    print(messages);
+
+    setState(() {
+      messages.add(messageModel);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: [
-        Image.asset(
-          "assets/whatsapp_Back.png",
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width,
-          fit: BoxFit.cover,
-        ),
+       children: [
+      //   Image.asset(
+      //     "assets/whatsapp_Back.png",
+      //     height: MediaQuery.of(context).size.height,
+      //     width: MediaQuery.of(context).size.width,
+      //     fit: BoxFit.cover,
+      //   ),
         Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(60),
-            child: AppBar(
 
-              backgroundColor: Theme.of(context).primaryColor,
-              leadingWidth: 70,
-              titleSpacing: 0,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: PreferredSize (
+            preferredSize: const Size.fromHeight(60),
+            child: AppBar(
+              centerTitle: true,
+
+              backgroundColor: Colors.transparent,
               leading: InkWell(
                 onTap: () {
                   Navigator.pop(context);
                 },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                child:
                     Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                      size: 24,
+                      Icons.arrow_back_rounded,
+                      color: Theme.of(context).indicatorColor,
+                      size: 26,
                     ),
-                    CircleAvatar(
 
-                      radius: 20,
-                      backgroundColor: Colors.blueGrey,
-                    ),
-                  ],
+
                 ),
-              ),
-              title: InkWell(
-                onTap: () {},
-                child: Container(
-                  margin: EdgeInsets.all(6),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              title: Stack(
+                children: [
+
+                  Row(
                     children: [
+                      CircleAvatar (
+                        radius: 20,
+                        backgroundColor: Colors.blueGrey,
+                      ),
+                      SizedBox(width: 10,),
                       Text(
                         widget.chatModel.name,
-                        style: TextStyle(
+                        style: const TextStyle(
+
                           fontSize: 18.5,
-                          color: Colors.white,
+                          color: Colors.black87,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        "last seen today at 12:05",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      )
                     ],
                   ),
-                ),
+
+                  Positioned(
+                    right: 0,
+                      left: 20,
+                      child:  ExpandableMenu(
+                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.9),
+                          width: 40.0,
+                          height: 40.0,
+                          items: [
+                            Icon(
+                              Icons.settings,
+                              color: Colors.white,
+                            ),
+                            Icon(
+                              Icons.call,
+                              color: Colors.white,
+                            ),
+                            Icon(
+                              Icons.camera_alt_rounded,
+                              color: Colors.white,
+                            ),
+
+                          ],
+                        ),
+
+                  ),
+
+
+                ],
               ),
               actions: [
-                IconButton(icon: Icon(Icons.videocam, color: Colors.white,), onPressed: () {}),
-                IconButton(icon: Icon(Icons.call,color: Colors.white, ), onPressed: () {}),
-                PopupMenuButton<String>(
-                  color: Colors.white,
-                  padding: EdgeInsets.all(0),
-                  onSelected: (value) {
-                    print(value);
-                  },
-                  itemBuilder: (BuildContext contesxt) {
-                    return [
-                      PopupMenuItem(
-                        child: Text("View Contact"),
-                        value: "View Contact",
-                      ),
-                      PopupMenuItem(
-                        child: Text("Media, links, and docs"),
-                        value: "Media, links, and docs",
-                      ),
-                      PopupMenuItem(
-                        child: Text("Whatsapp Web"),
-                        value: "Whatsapp Web",
-                      ),
-                      PopupMenuItem(
-                        child: Text("Search"),
-                        value: "Search",
-                      ),
-                      PopupMenuItem(
-                        child: Text("Mute Notification"),
-                        value: "Mute Notification",
-                      ),
-                      PopupMenuItem(
-                        child: Text("Wallpaper"),
-                        value: "Wallpaper",
-                      ),
-                    ];
-                  },
-                ),
+
               ],
             ),
           ),
           body: Container(
+
+
+
             height: MediaQuery.of(context).size.height,
             width: MediaQuery.of(context).size.width,
             child: WillPopScope(
@@ -230,7 +299,7 @@ class _DiscussionScreen extends State<DiscussionScreen> {
                                 width: MediaQuery.of(context).size.width - 60,
                                 child: Card(
                                   color:Colors.white, //Theme.of(context).scaffoldBackgroundColor,
-                                  margin: EdgeInsets.only(
+                                  margin: const EdgeInsets.only(
                                       left: 2, right: 2, bottom: 8),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(25),
@@ -256,7 +325,7 @@ class _DiscussionScreen extends State<DiscussionScreen> {
                                     decoration: InputDecoration(
                                       border: InputBorder.none,
                                       hintText: "Message",
-                                      hintStyle: TextStyle(color: Colors.grey),
+                                      hintStyle: const TextStyle(color: Colors.grey),
                                       prefixIcon: IconButton(
                                         icon: Icon(
                                           show
@@ -278,7 +347,7 @@ class _DiscussionScreen extends State<DiscussionScreen> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           IconButton(
-                                            icon: Icon(Icons.attach_file,color: Colors.grey,),
+                                            icon: const Icon(Icons.attach_file,color: Colors.grey,),
                                             onPressed: () {
                                               showModalBottomSheet(
                                                   backgroundColor:
@@ -289,7 +358,7 @@ class _DiscussionScreen extends State<DiscussionScreen> {
                                             },
                                           ),
                                           IconButton(
-                                            icon: Icon(Icons.camera_alt,color: Colors.grey,),
+                                            icon: const Icon(Icons.camera_alt,color: Colors.grey,),
                                             onPressed: () {
                                               // Navigator.push(
                                               //     context,
@@ -301,7 +370,7 @@ class _DiscussionScreen extends State<DiscussionScreen> {
 
                                         ],
                                       ),
-                                      contentPadding: EdgeInsets.all(5),
+                                      contentPadding: const EdgeInsets.all(5),
                                     ),
                                   ),
                                 ),
@@ -314,29 +383,29 @@ class _DiscussionScreen extends State<DiscussionScreen> {
                                 ),
                                 child: CircleAvatar(
                                   radius: 25,
-                                  backgroundColor: Color(0xFF128C7E),
+                                  backgroundColor: Theme.of(context).primaryColor,
                                   child: IconButton(
                                     icon: Icon(
                                       sendButton ? Icons.send : Icons.mic,
                                       color: Colors.white,
                                     ),
                                     onPressed: () {
-                                      // if (sendButton) {
-                                      //   _scrollController.animateTo(
-                                      //       _scrollController
-                                      //           .position.maxScrollExtent,
-                                      //       duration:
-                                      //       Duration(milliseconds: 300),
-                                      //       curve: Curves.easeOut);
-                                      //   sendMessage(
-                                      //       _controller.text,
-                                      //       widget.sourchat.id,
-                                      //       widget.chatModel.id);
-                                      //   _controller.clear();
-                                      //   setState(() {
-                                      //     sendButton = false;
-                                      //   });
-                                      // }
+                                      if (sendButton) {
+                                        _scrollController.animateTo(
+                                            _scrollController
+                                                .position.maxScrollExtent,
+                                            duration:
+                                            const Duration(milliseconds: 300),
+                                            curve: Curves.easeOut);
+                                        sendMessage(
+                                            _controller.text,
+                                            widget.sourchat.id,
+                                            widget.chatModel.id);
+                                        _controller.clear();
+                                        setState(() {
+                                          sendButton = false;
+                                        });
+                                      }
                                     },
                                   ),
                                 ),
@@ -383,28 +452,28 @@ class _DiscussionScreen extends State<DiscussionScreen> {
                 children: [
                   iconCreation(
                       Icons.insert_drive_file, Colors.indigo, "Document"),
-                  SizedBox(
+                  const SizedBox(
                     width: 40,
                   ),
                   iconCreation(Icons.camera_alt, Colors.pink, "Camera"),
-                  SizedBox(
+                  const SizedBox(
                     width: 40,
                   ),
                   iconCreation(Icons.insert_photo, Colors.purple, "Gallery"),
                 ],
               ),
-              SizedBox(
+              const SizedBox(
                 height: 30,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   iconCreation(Icons.headset, Colors.orange, "Audio"),
-                  SizedBox(
+                  const SizedBox(
                     width: 40,
                   ),
                   iconCreation(Icons.location_pin, Colors.teal, "Location"),
-                  SizedBox(
+                  const SizedBox(
                     width: 40,
                   ),
                   iconCreation(Icons.person, Colors.blue, "Contact"),
@@ -418,27 +487,26 @@ class _DiscussionScreen extends State<DiscussionScreen> {
   }
 
   Widget iconCreation(IconData icons, Color color, String text) {
-    return InkWell(
+    return GestureDetector(
       onTap: () {},
       child: Column(
         children: [
-
           CircleAvatar(
             radius: 30,
             backgroundColor: color,
             child: Icon(
               icons,
-              // semanticLabel: "Help",
+               semanticLabel: "Help",
               size: 29,
               color: Colors.white,
             ),
           ),
-          SizedBox(
+          const SizedBox(
             height: 5,
           ),
           Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               // fontWeight: FontWeight.w100,
             ),
@@ -447,6 +515,8 @@ class _DiscussionScreen extends State<DiscussionScreen> {
       ),
     );
   }
+
+
 
   // Widget emojiSelect() {
   //   return EmojiPicker(

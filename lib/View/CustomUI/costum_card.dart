@@ -26,28 +26,27 @@ class CustomCard extends StatelessWidget {
         children: [
 
            Padding(
-            padding: EdgeInsets.only(top: 8,bottom: 0),
+            padding: const EdgeInsets.only(top: 8,bottom: 0),
             child:ListTile(
               leading: CircleAvatar(
-                radius: 26,
+                radius: 28,
                 backgroundColor: Colors.blueGrey,
-                child: Container(
+
+                  //TODO add photo from the backend
                   // chatModel.isGroup ? "assets/groups.svg" : "assets/person.svg",
-                  color: Colors.blue,
-                  height: 36,
-                  width: 36,
-                ),
+                  backgroundImage: NetworkImage("https://media.istockphoto.com/id/455257149/photo/black-and-white-portrait-of-a-man.jpg?s=2048x2048&w=is&k=20&c=8qYBNWhLPNcNC66rwaFha1at1bDSmqTT_6gWlZxuX6k="),
+
               ),
               title: Text(
                 chatModel.name,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               subtitle: Row(
                 children: [
-                  const Icon(Icons.done_all),
+
                   const SizedBox(
                     width: 3,
                   ),

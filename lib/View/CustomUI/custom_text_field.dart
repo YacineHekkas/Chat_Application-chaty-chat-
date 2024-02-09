@@ -1,3 +1,4 @@
+import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 
 
@@ -23,7 +24,7 @@ class CustomTextField extends StatelessWidget {
   final TextAlign? textAlign;
   final TextInputType? keyboardType;
   final String? prefixText;
-  final VoidCallback? onTap;
+  final Function()? onTap;
   final Widget? suffixIcon;
   final Function(String)? onChanged;
   final double? fontSize;
@@ -45,15 +46,15 @@ class CustomTextField extends StatelessWidget {
         prefixText: prefixText,
         suffix: suffixIcon,
         hintText: hintText,
-        hintStyle: TextStyle(color: Colors.green),
-        enabledBorder: const UnderlineInputBorder(
+        hintStyle: TextStyle(color: Colors.grey.withOpacity(.9)),
+        enabledBorder:  UnderlineInputBorder(
           borderSide: BorderSide(
-            color:Colors.green,
+            color:Theme.of(context).primaryColor,
           ),
         ),
-        focusedBorder: const UnderlineInputBorder(
+        focusedBorder:  UnderlineInputBorder(
           borderSide: BorderSide(
-            color: Colors.green,
+            color: Theme.of(context).indicatorColor,
             width: 2,
           ),
         ),
