@@ -19,14 +19,16 @@ class AuthRepository {
 
 
   // SIGN UP
-  Future<String> login ({required String email, }) async {
+  Future<String> login ({required String email, required String username }) async {
     try {
       Dio dio = Dio();
 
       String apiUrl = "http://localhost:5000/api/users/login";
 
       Map<String, dynamic> data = {
-        'email': email,
+        'username':username,
+        'email': email
+
       };
 
       Response response = await dio.post(
@@ -103,13 +105,13 @@ class AuthRepository {
 
   final authNotifierProvider = StateNotifierProvider<AuthNotifier,bool>((ref) => AuthNotifier(ref.watch(authRepositoryProvider)));
 
-class AuthNotifier extends StateNotifier<bool>{
+class AuthNotifier extends StateNotifier < bool > {
   final AuthRepository _authRepository;
   AuthNotifier( this._authRepository) : super(false) ;
-    login({required String email, required BuildContext context,})async{
+    login({required String email, required String username , required BuildContext context,})async{
       try{
         state = true;
-        await _authRepository.login(email: email).then((value) {
+        await _authRepository.login(email: email, username: username ).then((value) {
           print("__>$value");
           Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) =>  VerificationScreen(userID: value) ));
         }

@@ -15,6 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
  // late Response response;
   late TextEditingController countryNameController;
+  late TextEditingController userNameController;
   late TextEditingController countryCodeController;
   late TextEditingController phonNumberController;
   late TextEditingController emailController;
@@ -26,6 +27,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     countryNameController = TextEditingController(text: 'Algeria');
     countryCodeController = TextEditingController(text: '213');
     phonNumberController = TextEditingController();
+    userNameController = TextEditingController();
     emailController = TextEditingController();
     super.initState();
   }
@@ -101,6 +103,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 50),
                 child:  CustomTextField(
+                  controller: userNameController,
+                  hintText: 'entre your user name',
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 50),
+                child:  CustomTextField(
                   controller: emailController,
                   hintText: 'entre your email',
                   textAlign: TextAlign.center,
@@ -154,12 +166,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
                 ),
                 onPressed: () async {
-                  if ((phonNumberController.text == "") || (emailController.text == "")) {
+                  if ((phonNumberController.text == "") || (emailController.text == "") || ( userNameController.text == "" )) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       backgroundColor: Colors.red,
                       content: Text('Please fill all fields.'),
                     ));
-                  }else if (!isEmailValid(emailController.text)) {
+                  }
+                  else if (!isEmailValid(emailController.text)) {
                     // Display an error message if email format is invalid
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       backgroundColor: Colors.red,
@@ -167,7 +180,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ));
                   }
                   else{
-                    ref.read(authNotifierProvider.notifier).login(email: emailController.text, context: context);
+                    ref.read ( authNotifierProvider.notifier ).login(email: emailController.text, username : userNameController.text, context: context );
                   }
 
                 },
@@ -189,7 +202,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     return emailRegExp.hasMatch(email);
   }
-
 
 
   showCountryPickerBottomSheet() {

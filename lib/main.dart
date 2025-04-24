@@ -16,7 +16,7 @@ Future<void> checkIfTheUserIsSigned() async {
 
 
   final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-  await secureStorage.delete(key: 'userId');
+  //await secureStorage.delete(key: 'userId');
   String?  authToken = await secureStorage.read(key: 'userId');
   loggedIn = (authToken != null);
 

@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/Models/chat_model.dart';
 import 'package:whatsapp_clone/view/CustomUI/costum_card.dart';
+import 'package:whatsapp_clone/Controller/chatController.dart';
+
 
 import '../Pages/ChatPage.dart';
 
@@ -19,12 +21,16 @@ class _HomescreenState extends State<Homescreen>
   late TabController _controller;
   @override
   void initState() {
+
     super.initState();
+    print("im in init");
+    getTalkedList();
     _controller = TabController(length: 2, vsync: this, initialIndex: 0);
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
@@ -98,28 +104,25 @@ class _HomescreenState extends State<Homescreen>
                       sourchat: widget.sourchat,
                     );
                   },
-                  childCount: widget.chatmodels.length,
+                  childCount: 4,
                 ),
               ),
             ],
           ),
-          Positioned(
 
-            bottom: 20,
-            right: 20,
-
-            child: FloatingActionButton(
-              backgroundColor: Theme.of(context).indicatorColor,
-            onPressed: () {
-              //TODO :: add search screen and methods for the backend
-            },
-            child: Icon(
-                Icons.add,
-              color: Colors.white,
-            ),
-          ),)
         ],
-      )
+      ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Theme.of(context).indicatorColor,
+          onPressed: () {
+            //TODO :: add search screen and methods for the backend
+          },
+          child: Icon(
+            Icons.add,
+            color: Colors.white,
+          ),
+        ),
+
     );
 
   }

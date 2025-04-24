@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:whatsapp_clone/Controller/chatController.dart';
 
 import 'package:whatsapp_clone/Models/chat_model.dart';
 import '../CustomUI/costum_card.dart';
@@ -11,9 +12,15 @@ class ChatPage extends StatefulWidget {
 
   @override
   _ChatPageState createState() => _ChatPageState();
+
 }
 
+
+
 class _ChatPageState extends State<ChatPage> {
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
